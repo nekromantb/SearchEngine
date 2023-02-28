@@ -1,0 +1,4 @@
+cmake-build-debug/
+nlohmann_json/
+.idea/
+*.log
