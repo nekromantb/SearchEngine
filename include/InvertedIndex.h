@@ -48,5 +48,5 @@ private:
      * @param docid_iter принимает на вход docid текущего отбрабатываемого фаила
      * @param input_string содержимое документа
      */
-    void oneThreadUpdateDocumentBase(int& docid_iter, std::string& input_string);
+    void oneThreadUpdateDocumentBase(int docid_iter, std::string input_string);
 };

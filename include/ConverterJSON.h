@@ -5,8 +5,8 @@ using json = nlohmann::json;
 
 class ConverterJSON
 {
-    bool readyForWork = false;
-    bool forceExit = false;
+    bool readyForWork = false; // флаг готовности к работе с БД
+    bool forceExit = false; // флаг отказа пользователя от работы с программой (не прочитаны конфиг фаилы)
     json config;
     json requests;
     json answers;

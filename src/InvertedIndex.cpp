@@ -8,7 +8,7 @@
 #include <mutex>
 
 std::mutex db_lock; // синхронизация потоков
-void InvertedIndex::oneThreadUpdateDocumentBase(int& docid_iter, std::string& input_string) {
+void InvertedIndex::oneThreadUpdateDocumentBase(int docid_iter, std::string input_string) {
     std::stringstream buffer_string;
     buffer_string = std::stringstream (input_string);
     while (!buffer_string.eof())
@@ -25,9 +25,16 @@ void InvertedIndex::oneThreadUpdateDocumentBase(int& docid_iter, std::string& in
         }
         else
         {
-            for (auto entry_doc :dict_iterator->second )
+            bool added = false;
+            for (auto entry_doc: dict_iterator->second) {
                 if (entry_doc.doc_id == docid_iter)
-                    ++entry_doc.count;
+                {
+                    ++dict_iterator->second[docid_iter].count;
+                    added = true;
+                }
+            }
+            if(added == false)
+                dict_iterator->second.push_back({size_t(docid_iter), 1});
         }
         db_lock.unlock();
     }
@@ -37,19 +44,22 @@ void InvertedIndex::updateDocumentBase(std::vector<std::string> input_docs)
 {
     freq_dictionary.clear();
     std::vector<std::thread> doc_update;
-    for (int docid_iter = 0; docid_iter <= input_docs.size(); docid_iter++)
+    for (int docid_iter = 0; docid_iter < input_docs.size(); ++docid_iter)
     {
-        doc_update.emplace_back([&](){
+        doc_update.emplace_back([docid_iter, this, input_docs](){
             oneThreadUpdateDocumentBase(docid_iter,input_docs[docid_iter]);
             });
     }
-    for (int docid_iter = 0; docid_iter <= input_docs.size(); docid_iter++)
+    for (int docid_iter = 0; docid_iter < input_docs.size(); ++docid_iter)
     {
-        doc_update.at(docid_iter).join();
+        doc_update[docid_iter].join();
     }
 }
 
 std::vector<Entry> InvertedIndex::getWordCount(const std::string &word)
 {
-    return freq_dictionary.find(word)->second;
+    if (auto dict = freq_dictionary.find(word) == freq_dictionary.end())
+        return {};
+    else
+        return freq_dictionary.find(word)->second;
 }
