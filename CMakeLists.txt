@@ -11,8 +11,7 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-set(SOURCE_FILES main.cpp)
-add_executable(${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
+add_executable(${CMAKE_PROJECT_NAME} main.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
@@ -26,5 +25,3 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/nloh
 
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(${CMAKE_PROJECT_NAME} gtest gtest_main)
-
-

@@ -276,12 +276,12 @@ void ConverterJSON::putAnswers(std::vector<std::vector<std::pair<int, float>>> a
                 char *numberRequest = nullptr;
                 std::sprintf(numberRequest, "%03d", requestsIterator);
                 answers["answers"]["request"+std::string(numberRequest)]["result"] = "true";
-                for (auto pairs: answersOutput[requestsIterator])
+                for (int iter_answers_max = 0; iter_answers_max < getResponsesLimit(); ++iter_answers_max)
                 {
                     answers["answers"]["request"+std::string(numberRequest)]["relevance"]["docid"] =
-                            pairs.first;
+                            answersOutput[requestsIterator][iter_answers_max].first;
                     answers["answers"]["request"+std::string(numberRequest)]["relevance"]["rank"] =
-                            pairs.second;
+                            answersOutput[requestsIterator][iter_answers_max].second;
                 }
             }
         }

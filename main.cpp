@@ -85,30 +85,30 @@ TEST(TestCaseInvertedIndex, TestInvertedIndexMissingWord) {
     TestInvertedIndexFunctionality(docs, requests, expected);
 }
 
-//TEST(TestCaseSearchServer, TestSimple) {
-//    const vector<string> docs = {
-//            "milk milk milk milk water water water",
-//            "milk water water",
-//            "milk milk milk milk milk water water water water water",
-//            "americano cappuccino"
-//    };
-//    const vector<string> request = {"milk water", "sugar"};
-//    const std::vector<vector<RelativeIndex>> expected = {
-//            {
-//                    {2, 1},
-//                    {0, 0.7},
-//                    {1, 0.3}
-//            },
-//            {
-//            }
-//    };
-//    InvertedIndex idx;
-//    idx.updateDocumentBase(docs);
-//    SearchServer srv(idx);
-//    std::vector<vector<RelativeIndex>> result = srv.search(request);
-//    ASSERT_EQ(result, expected);
-//}
-//
+TEST(TestCaseSearchServer, TestSimple) {
+    const vector<string> docs = {
+            "milk milk milk milk water water water",
+            "milk water water",
+            "milk milk milk milk milk water water water water water",
+            "americano cappuccino"
+    };
+    const vector<string> request = {"milk water", "sugar"};
+    const std::vector<vector<RelativeIndex>> expected = {
+            {
+                    {2, 1},
+                    {0, 0.7},
+                    {1, 0.3}
+            },
+            {
+            }
+    };
+    InvertedIndex idx;
+    idx.updateDocumentBase(docs);
+    SearchServer srv(idx);
+    std::vector<vector<RelativeIndex>> result = srv.search(request, 5);
+    ASSERT_EQ(result, expected);
+}
+
 //TEST(TestCaseSearchServer, TestTop5) {
 //    const vector<string> docs = {
 //            "london is the capital of great britain",
@@ -147,6 +147,6 @@ TEST(TestCaseInvertedIndex, TestInvertedIndexMissingWord) {
 //    InvertedIndex idx;
 //    idx.updateDocumentBase(docs);
 //    SearchServer srv(idx);
-//    std::vector<vector<RelativeIndex>> result = srv.search(request);
+//    std::vector<vector<RelativeIndex>> result = srv.search(request, 5);
 //    ASSERT_EQ(result, expected);
 //}

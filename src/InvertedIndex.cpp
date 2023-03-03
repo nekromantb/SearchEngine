@@ -58,7 +58,7 @@ void InvertedIndex::updateDocumentBase(std::vector<std::string> input_docs)
 
 std::vector<Entry> InvertedIndex::getWordCount(const std::string &word)
 {
-    if (auto dict = freq_dictionary.find(word) == freq_dictionary.end())
+    if (freq_dictionary.find(word) == freq_dictionary.end())
         return {};
     else
         return freq_dictionary.find(word)->second;
