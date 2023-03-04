@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(SearchEngine VERSION 0.1 DESCRIPTION "Search engine for skillbox curse by BityukovDV")
+project(SearchEngine VERSION 0.1 DESCRIPTION "Search engine for skillbox course by BityukovDV")
 set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
