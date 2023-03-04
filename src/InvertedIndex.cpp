@@ -16,6 +16,7 @@ void InvertedIndex::oneThreadUpdateDocumentBase(int docid_iter, const std::strin
         std::string buffer_word;
         std::vector<Entry> buffer_vector;
         buffer_string >> buffer_word;
+        if (buffer_word == "") continue;
         db_lock.lock();
         auto dict_iterator = freq_dictionary.find(buffer_word);
         if (dict_iterator == freq_dictionary.end())

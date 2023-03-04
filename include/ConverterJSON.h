@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nlohmann/json.hpp"
+#include "SearchServer.h"
 using json = nlohmann::json;
 
 class ConverterJSON
@@ -10,9 +11,9 @@ class ConverterJSON
     json config;
     json requests;
     json answers;
-    std::string configPath = "config.json";
-    std::string requestsPath = "requests.json";
-    std::string answersPath = "/output/answers.json";
+    std::string configPath = R"(G:\work\Prog\DiplomCpp\SearchEngine\config.json)";
+    std::string requestsPath = R"(G:\work\Prog\DiplomCpp\SearchEngine\requests.json)";
+    std::string answersPath = R"(G:\work\Prog\DiplomCpp\SearchEngine\output\answers.json)";
     /**
     * Методы изменения пути к конфигурационным фаилам.
     * Выставляет флаг readyForWork в false.
@@ -59,7 +60,7 @@ public:
     /**
     * Положить в файл answers.json результаты поисковых запросов
     */
-    void putAnswers(std::vector<std::vector<std::pair<int, float>>> answers);
+    void putAnswers(std::vector<std::vector<RelativeIndex>> answers);
 
     /**
      * Метод проверки готовности движка к работе.

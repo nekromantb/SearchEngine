@@ -3,7 +3,9 @@
 #include <string>
 #include <fstream>
 #include <exception>
+#include <cstdio>
 #include "nlohmann/json.hpp"
+#include "SearchServer.h"
 using json = nlohmann::json;
 
 class ConfigurationFileIsEmptyException: public std::exception
@@ -205,8 +207,8 @@ void ConverterJSON::setRequestsPath()
 std::vector<std::string> ConverterJSON::getTextDocuments()
 {
     std::vector<std::string> docData;
-    std::string buffer_word, buffer_string;
     for (std::string i: config["files"]) {
+        std::string buffer_word, buffer_string;
         std::ifstream inputData(i);
         while (!inputData.eof())
         {
@@ -248,40 +250,39 @@ std::vector<std::string> ConverterJSON::getRequests()
     return requestsData;
 }
 
-void ConverterJSON::putAnswers(std::vector<std::vector<std::pair<int, float>>> answersOutput)
+void ConverterJSON::putAnswers(std::vector<std::vector<RelativeIndex>> answersOutput)
 {
     /** Filling answers map*/
     for (int requestsIterator = 0; requestsIterator < answersOutput.size(); requestsIterator++ )
     {
+        char numberRequest[11];
+        std::sprintf(numberRequest, "request %03i", requestsIterator);
         if (answersOutput[requestsIterator].empty())
         {
-            char *numberRequest = nullptr;
-            std::sprintf(numberRequest, "%03d", requestsIterator);
-            answers["answers"]["request"+std::string(numberRequest)]["result"] = "false";
+            answers["answers"][std::string(numberRequest)]["result"] = "false";
         }
         else
         {
             if (answersOutput[requestsIterator].size() == 1)
             {
-                char *numberRequest = nullptr;
-                std::sprintf(numberRequest, "%03d", requestsIterator);
-                answers["answers"]["request"+std::string(numberRequest)]["result"] =
+                answers["answers"] =
+                answers["answers"][std::string(numberRequest)]["result"] =
                         "true";
-                answers["answers"]["request"+std::string(numberRequest)]["docid"] =
-                        answersOutput[requestsIterator][0].first;
-                answers["answers"]["request"+std::string(numberRequest)]["rank"] =
-                        answersOutput[requestsIterator][0].second;
+                answers["answers"][std::string(numberRequest)]["docid"] =
+                        answersOutput[requestsIterator][0].doc_id;
+                answers["answers"][std::string(numberRequest)]["rank"] =
+                        answersOutput[requestsIterator][0].rank;
             }
             else{
-                char *numberRequest = nullptr;
-                std::sprintf(numberRequest, "%03d", requestsIterator);
-                answers["answers"]["request"+std::string(numberRequest)]["result"] = "true";
-                for (int iter_answers_max = 0; iter_answers_max < getResponsesLimit(); ++iter_answers_max)
+                answers["answers"][std::string(numberRequest)]["result"] = "true";
+                for (int iter_answers = 0;
+                iter_answers < answersOutput[requestsIterator].size();
+                ++iter_answers)
                 {
-                    answers["answers"]["request"+std::string(numberRequest)]["relevance"]["docid"] =
-                            answersOutput[requestsIterator][iter_answers_max].first;
-                    answers["answers"]["request"+std::string(numberRequest)]["relevance"]["rank"] =
-                            answersOutput[requestsIterator][iter_answers_max].second;
+                    answers["answers"][std::string(numberRequest)]["relevance"].push_back({
+                        {"docid",answersOutput[requestsIterator][iter_answers].doc_id},
+                        {"rank",answersOutput[requestsIterator][iter_answers].rank}
+                    });
                 }
             }
         }

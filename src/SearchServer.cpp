@@ -145,7 +145,7 @@ std::vector<std::vector<RelativeIndex>> SearchServer::search(const std::vector<s
         }
         for (auto & doc : relevant)
         {
-            doc.rank = doc.rank / max;
+            doc.rank = roundf(doc.rank) / roundf(max);
         }
         // Сортировка релевантности по убыванию.
         std::sort(relevant.begin(),
