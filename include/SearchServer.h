@@ -5,7 +5,7 @@
 
 struct RelativeIndex{
     size_t doc_id;
-    float rank = .0;
+    double rank = 0;
     bool operator ==(const RelativeIndex& other) const {
         return (doc_id == other.doc_id && rank == other.rank);
     }
@@ -15,6 +15,7 @@ struct WordCount
 {
     std::string word;
     int count = 0;
+    std::vector<Entry> doc_count;
 };
 
 class SearchServer
@@ -24,9 +25,9 @@ class SearchServer
      * Внутренний метод подсчета общего количества вхождений слов из запроса
      * в заданные тексты для проведения сортировки (проводится в многопоточном режиме)
      * @param word структура, хранящяя слово и количество его вхождений
-     * @param count возращаемый от метода getWordCount вектор
+     * @param iterator итератор текущего слова.
      */
-    void countWordCountInTread(std::vector<WordCount>& word, std::vector<Entry> count, int iterator);
+    void countWordCountInTread(std::vector<WordCount>& word, int iterator);
 public:
     /**
     * @param idx в конструктор класса передаётся ссылка на класс

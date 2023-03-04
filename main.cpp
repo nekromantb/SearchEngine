@@ -9,7 +9,8 @@
 
 int main() {
     ::testing::InitGoogleTest();
-    return RUN_ALL_TESTS();
+    return
+    RUN_ALL_TESTS();
 }
 
 TEST(sample_test_case, sample_test)
