@@ -2,7 +2,6 @@
 #include "ConverterJSON.h"
 #include <vector>
 #include <string>
-#include <sstream>
 #include <thread>
 #include <mutex>
 #include <algorithm>
