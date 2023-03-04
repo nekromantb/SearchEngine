@@ -8,7 +8,7 @@
 #include <mutex>
 
 std::mutex db_lock; // синхронизация потоков
-void InvertedIndex::oneThreadUpdateDocumentBase(int docid_iter, std::string input_string) {
+void InvertedIndex::oneThreadUpdateDocumentBase(int docid_iter, const std::string& input_string) {
     std::stringstream buffer_string;
     buffer_string = std::stringstream (input_string);
     while (!buffer_string.eof())
@@ -26,14 +26,14 @@ void InvertedIndex::oneThreadUpdateDocumentBase(int docid_iter, std::string inpu
         else
         {
             bool added = false;
-            for (auto entry_doc: dict_iterator->second) {
+            for (auto & entry_doc: dict_iterator->second) {
                 if (entry_doc.doc_id == docid_iter)
                 {
-                    ++dict_iterator->second[docid_iter].count;
+                    ++(entry_doc.count);
                     added = true;
                 }
             }
-            if(added == false)
+            if(!added)
                 dict_iterator->second.push_back({size_t(docid_iter), 1});
         }
         db_lock.unlock();

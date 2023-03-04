@@ -5,7 +5,7 @@
 #include <sstream>
 #include <thread>
 #include <mutex>
-#include <cstdlib>
+#include <algorithm>
 
 
 std::mutex db_lock_search; // синхронизация потоков
@@ -13,9 +13,9 @@ std::mutex db_lock_search; // синхронизация потоков
 void SearchServer::countWordCountInTread(std::vector<WordCount>& unique_pull, int iterator)
 {
     int sum= 0;
-    for (auto iter: unique_pull[iterator].doc_count)
+    for (auto & iter: unique_pull[iterator].doc_count)
     {
-        sum += iter.count;
+        sum += (int)iter.count;
     }
     db_lock_search.lock();
     unique_pull[iterator].count = sum;
@@ -26,28 +26,26 @@ std::vector<std::vector<RelativeIndex>> SearchServer::search(const std::vector<s
                                                              const int response_limit)
 {
     std::vector<std::vector<RelativeIndex>> doc_to_answer;
-    for (int request_index = 0; request_index < queries_input.size(); ++request_index)
+    for (auto & request_index : queries_input)
     {
         // Создание уникального массива с общим количеством слов в тексте
         std::vector<WordCount> unique_pull;
-        std::stringstream buffer_request(queries_input[request_index]);
+        std::stringstream buffer_request(request_index);
         std::vector<std::thread> count_word_in_bd;
         while (!buffer_request.eof())
         {
             std::string buffer_word;
             buffer_request >> buffer_word;
             bool unique = true;
-            for (int iter_pull = 0;
-                     iter_pull<unique_pull.size();
-                     ++iter_pull)
-                if (unique_pull[iter_pull].word == buffer_word)
+            for (auto & iter_pull : unique_pull)
+                if (iter_pull.word == buffer_word)
                     unique = false;
             if (unique)
             {
                 WordCount buffer_wordcount;
                 buffer_wordcount.word = buffer_word;
                 buffer_wordcount.doc_count = _index.getWordCount(buffer_wordcount.word);
-                int iterator_unique_pull = unique_pull.size();
+                int iterator_unique_pull = (int)unique_pull.size();
                 unique_pull.emplace_back(buffer_wordcount);
                 count_word_in_bd.emplace_back([&unique_pull, iterator_unique_pull, this]()
                 {
@@ -60,17 +58,12 @@ std::vector<std::vector<RelativeIndex>> SearchServer::search(const std::vector<s
             count_word_in_bd.at(iter).join();
         }
         // Сортировка по возрастанию count массива уникальных слов
-        std::qsort(unique_pull.data(),
-                   unique_pull.size(),
-                   sizeof(decltype(unique_pull)::value_type),
-                   [](const void* x, const void* y)
-        {
-            if ((((WordCount*)x)->count) < (((WordCount*)y)->count))
-                return -1;
-            if ((((WordCount*)x)->count) > (((WordCount*)y)->count))
-                return 1;
-            return 0;
-        });
+        std::sort(unique_pull.begin(),
+                   unique_pull.end(),
+                   [](const WordCount& x, const WordCount& y)->bool
+                  {
+                        return x.count < y.count;
+                  });
         // Зацикленный отбор документов. закончится при достижении лимита на выдачу или если документов не останется.
         std::vector<RelativeIndex> buffer_doc_out;
         for (int iter_unique_word = 0; iter_unique_word < unique_pull.size(); ++iter_unique_word)
@@ -79,21 +72,21 @@ std::vector<std::vector<RelativeIndex>> SearchServer::search(const std::vector<s
                      iter_word_to_search < unique_pull.size();
                      ++iter_word_to_search)
             {
-                for (auto docs: unique_pull[iter_unique_word].doc_count)
+                for (auto & docs: unique_pull[iter_unique_word].doc_count)
                 {
                     bool word_in_doc = false;
-                    for (auto docs_to_search: unique_pull[iter_word_to_search].doc_count)
+                    for (auto & docs_to_search: unique_pull[iter_word_to_search].doc_count)
                         if (docs.doc_id == docs_to_search.doc_id)
                             word_in_doc = true;
                     if (!word_in_doc) docs.count = 0;
                 }
             }
-            for (auto docs: unique_pull[iter_unique_word].doc_count)
+            for (auto & docs: unique_pull[iter_unique_word].doc_count)
             {
                 if (docs.count!=0)
                 {
                     bool exist = false;
-                    for (auto docs_in_answer: buffer_doc_out)
+                    for (auto & docs_in_answer: buffer_doc_out)
                         if(docs.doc_id ==docs_in_answer.doc_id)
                             exist = true;
                     if(!exist)
@@ -111,36 +104,37 @@ std::vector<std::vector<RelativeIndex>> SearchServer::search(const std::vector<s
         }
         if (buffer_doc_out.empty())
         {
+            doc_to_answer.emplace_back();
             continue;
         }
         // Расчет релевантности для полученных документов.
         std::vector<RelativeIndex> relevant;
-        double max = 0;
-        for (auto doc:buffer_doc_out)
+        float max = 0;
+        for (auto & doc:buffer_doc_out)
         {
-            for (auto word: unique_pull)
+            for (auto & word_in_pull: unique_pull)
             {
-                //word.doc_count = _index.getWordCount(word.word);
-                for (auto word_docs: word.doc_count)
+                word_in_pull.doc_count = _index.getWordCount(word_in_pull.word);
+                for (auto & word_docs: word_in_pull.doc_count)
                 {
                     if (doc.doc_id == word_docs.doc_id)
                     {
                         bool exist = false;
-                        for (int rel_index = 0; rel_index < relevant.size(); ++rel_index)
+                        for (auto & rel_index : relevant)
                         {
-                            if (relevant[rel_index].doc_id == word_docs.doc_id)
+                            if (rel_index.doc_id == word_docs.doc_id)
                             {
-                                relevant[rel_index].rank += word_docs.count;
+                                rel_index.rank += (float)word_docs.count;
                                 exist = true;
-                                if (max < relevant[rel_index].rank)
-                                    max = relevant[rel_index].rank;
+                                if (max < rel_index.rank)
+                                    max = rel_index.rank;
                             }
                         }
                         if (!exist)
                         {
                             RelativeIndex buffer;
                             buffer.doc_id = word_docs.doc_id;
-                            buffer.rank = word_docs.count;
+                            buffer.rank = (float)word_docs.count;
                             relevant.emplace_back(buffer);
                             if (max < relevant.back().rank)
                                 max = relevant.back().rank;
@@ -149,28 +143,24 @@ std::vector<std::vector<RelativeIndex>> SearchServer::search(const std::vector<s
                 }
             }
         }
-        for (int doc = 0; doc < relevant.size(); ++doc)
+        for (auto & doc : relevant)
         {
-            relevant[doc].rank = relevant[doc].rank / max;
+            doc.rank = doc.rank / max;
         }
         // Сортировка релевантности по убыванию.
-        std::qsort(relevant.data(),
-                   relevant.size(),
-                   sizeof(decltype(relevant)::value_type),
-                   [](const void* x, const void* y)
-                   {
-                       if ((((RelativeIndex*)x)->rank) < (((RelativeIndex*)y)->rank))
-                           return 1;
-                       if ((((RelativeIndex*)x)->rank) > (((RelativeIndex*)y)->rank))
-                           return -1;
-                       return 0;
-                   });
+        std::sort(relevant.begin(),
+                  relevant.end(),
+                  [](const RelativeIndex& x, const RelativeIndex& y)->bool
+                  {
+                      return x.rank > y.rank || ((x.rank == y.rank) && (x.doc_id < y.doc_id));
+                  });
         // Добавление результата в результирующий вектор
         if (!relevant.empty())
             doc_to_answer.emplace_back(relevant);
-        else
-            doc_to_answer.emplace_back();
     }
     if (doc_to_answer.empty()) return {};
+    for (auto & answer_for_response : doc_to_answer)
+        if (answer_for_response.size() > response_limit)
+            answer_for_response.resize(response_limit);
     return doc_to_answer;
 }

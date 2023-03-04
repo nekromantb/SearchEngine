@@ -4,8 +4,8 @@
 #include "InvertedIndex.h"
 
 struct RelativeIndex{
-    size_t doc_id;
-    double rank = 0;
+    size_t doc_id = 0;
+    float rank = 0;
     bool operator ==(const RelativeIndex& other) const {
         return (doc_id == other.doc_id && rank == other.rank);
     }
@@ -15,7 +15,7 @@ struct WordCount
 {
     std::string word;
     int count = 0;
-    std::vector<Entry> doc_count;
+    std::vector<Entry> doc_count = {};
 };
 
 class SearchServer
@@ -46,5 +46,5 @@ public:
     заданных запросов
     */
     std::vector<std::vector<RelativeIndex>> search(const std::vector<std::string> &queries_input,
-                                                   const int response_limit);
+                                                   int response_limit);
 };
